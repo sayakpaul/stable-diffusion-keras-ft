@@ -3,6 +3,7 @@ Adapted from https://github.com/huggingface/diffusers/blob/main/examples/text_to
 """
 
 import os
+from typing import Dict, Tuple
 
 import keras_cv
 import numpy as np
@@ -15,7 +16,6 @@ PADDING_TOKEN = 49407
 MAX_PROMPT_LENGTH = 77
 AUTO = tf.data.AUTOTUNE
 POS_IDS = tf.convert_to_tensor([list(range(MAX_PROMPT_LENGTH))], dtype=tf.int32)
-IMG_HEIGHT = IMG_WIDTH = 256
 DEFAULT_DATA_ARCHIVE = "https://huggingface.co/datasets/sayakpaul/pokemon-blip-original-version/resolve/main/pokemon_dataset.tar.gz"
 AUTO = tf.data.AUTOTUNE
 
@@ -53,21 +53,27 @@ class DatasetUtils:
             lambda x: os.path.join(data_path, x)
         )
 
-    def process_text(self, caption):
+    def process_text(self, caption: str) -> np.ndarray:
         tokens = self.tokenizer.encode(caption)
         tokens = tokens + [PADDING_TOKEN] * (MAX_PROMPT_LENGTH - len(tokens))
         return np.array(tokens)
 
-    def process_image(image_path, tokenized_text):
+    def process_image(
+        self, image_path: tf.Tensor, tokenized_text: tf.Tensor
+    ) -> Tuple[tf.Tensor, tf.Tensor]:
         image = tf.io.read_file(image_path)
         image = tf.io.decode_png(image, 3)
-        image = tf.image.resize(image, (IMG_HEIGHT, IMG_WIDTH))
+        image = tf.image.resize(image, (self.img_height, self.img_width))
         return image, tokenized_text
 
-    def apply_augmentation(self, image_batch, token_batch):
+    def apply_augmentation(
+        self, image_batch: tf.Tensor, token_batch: tf.Tensor
+    ) -> Tuple[tf.Tensor, tf.Tensor]:
         return self.augmenter(image_batch), token_batch
 
-    def run_text_encoder(self, image_batch, token_batch):
+    def run_text_encoder(
+        self, image_batch: tf.Tensor, token_batch: tf.Tensor
+    ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         # Since the text encoder will remain frozen we can precompute it.
         return (
             image_batch,
@@ -75,14 +81,19 @@ class DatasetUtils:
             self.text_encoder([token_batch, POS_IDS], training=False),
         )
 
-    def prepare_dict(self, image_batch, token_batch, encoded_text_batch):
+    def prepare_dict(
+        self,
+        image_batch: tf.Tensor,
+        token_batch: tf.Tensor,
+        encoded_text_batch: tf.Tensor,
+    ) -> Dict[str, tf.Tensor]:
         return {
             "images": image_batch,
             "tokens": token_batch,
             "encoded_text": encoded_text_batch,
         }
 
-    def prepare_dataset(self):
+    def prepare_dataset(self) -> tf.data.Dataset:
         all_captions = list(self.data_frame["caption"].values)
         tokenized_texts = np.empty((len(self.data_frame), MAX_PROMPT_LENGTH))
         for i, caption in enumerate(all_captions):
