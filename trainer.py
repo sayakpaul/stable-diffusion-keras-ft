@@ -5,7 +5,7 @@ import tensorflow.experimental.numpy as tnp
 
 
 class Trainer(tf.keras.Model):
-    # Reference: https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py
+    # Adapted from https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py
 
     def __init__(
         self,
