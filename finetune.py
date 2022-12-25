@@ -84,7 +84,7 @@ def run(args):
         CKPT_PREFIX
         + f"_epochs_{args.num_epochs}"
         + f"_res_{args.img_height}"
-        + f"_mp_{args.map}"
+        + f"_mp_{args.mp}"
         + ".h5"
     )
     diffusion_ft_trainer = Trainer(
