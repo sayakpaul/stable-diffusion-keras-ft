@@ -31,7 +31,38 @@ You can find the fine-tuned diffusion model weights [here](https://huggingface.c
 
 ## Inference
 
-Upcoming
+```py
+import keras_cv
+import matplotlib.pyplot as plt
+from tensorflow import keras
+
+IMG_HEIGHT = IMG_WIDTH = 256
+
+
+def plot_images(images, title):
+    plt.figure(figsize=(20, 20))
+    for i in range(len(images)):
+        ax = plt.subplot(1, len(images), i + 1)
+        plt.title(title)
+        plt.imshow(images[i])
+        plt.axis("off")
+
+
+# We just have to load the fine-tuned weights into the diffusion model.
+weights_path = keras.utils.get_file(
+    origin="https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/resolve/main/ema_diffusion_model.h5"
+)
+pokemon_model = keras_cv.models.StableDiffusion(
+    img_height=IMG_HEIGHT, img_width=IMG_WIDTH
+)
+pokemon_model.diffusion_model.load_weights(weights_path)
+
+# Generate images.
+generated_images = pokemon_model.text_to_image("Yoda", batch_size=3)
+plot_images(generated_images, "Fine-tuned on the Pokemon dataset")
+```
+
+You can check out this [Colab Notebook] (TODO) to play with the code.
 
 ## Results
 
