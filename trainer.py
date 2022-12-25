@@ -9,15 +9,20 @@ class Trainer(tf.keras.Model):
 
     def __init__(
         self,
-        diffusion_model,
-        vae,
+        diffusion_model: tf.keras.Model,
+        vae: tf.keras.Model,
         noise_scheduler,
+        ckpt_path: str,
+        pretrained_ckpt: str,
         ema=0.9999,
         max_grad_norm=1.0,
         **kwargs
     ):
         super().__init__(**kwargs)
         self.diffusion_model = diffusion_model
+        if pretrained_ckpt is not None:
+            self.diffusion_model.load_weights(pretrained_ckpt)
+
         self.vae = vae
         self.noise_scheduler = noise_scheduler
         self.max_grad_norm = max_grad_norm
@@ -25,6 +30,7 @@ class Trainer(tf.keras.Model):
         self.ema = ema
         self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
 
+        self.ckpt_path = ckpt_path
         self.vae.trainable = False
 
     def train_step(self, inputs):

@@ -24,6 +24,7 @@ from datasets import DatasetUtils
 from trainer import Trainer
 
 MAX_PROMPT_LENGTH = 77
+CKPT_PREFIX = "ckpt"
 
 
 def parse_args():
@@ -40,6 +41,14 @@ def parse_args():
     parser.add_argument("--epsilon", default=1e-08, type=float)
     parser.add_argument("--batch_size", default=4, type=int)
     parser.add_argument("--num_epochs", default=100, type=int)
+    parser.add_argument(
+        "--pretrained_ckpt",
+        default=None,
+        type=str,
+        help="Provide a local path to a diffusion model checkpoint in the `h5`"
+        " format if you want to start over fine-tuning from this checkpoint.",
+    )
+
     return parser.parse_args()
 
 
@@ -54,10 +63,17 @@ def run(args):
     training_dataset = data_utils.prepare_dataset()
 
     print("Initializing trainer...")
+    ckpt_path = (
+        CKPT_PREFIX + f"_{args.num_epochs}_epochs" + f"_{args.img_height}_res" + ".h5"
+    )
     diffusion_ft_trainer = Trainer(
-        DiffusionModel(args.img_height, args.img_width, MAX_PROMPT_LENGTH),
-        ImageEncoder(args.img_height, args.img_width),
-        NoiseScheduler(),
+        diffusion_model=DiffusionModel(
+            args.img_height, args.img_width, MAX_PROMPT_LENGTH
+        ),
+        vae=ImageEncoder(args.img_height, args.img_width),
+        noise_escheduler=NoiseScheduler(),
+        ckpt_path=ckpt_path,
+        pretrained_ckpt=args.pretrained_ckpt,
     )
 
     print("Initializing optimizer...")
