@@ -39,6 +39,8 @@ class DatasetUtils:
         )
 
         self.batch_size = batch_size
+        self.img_height = img_height
+        self.img_width = img_width
 
         if dataset_archive is None:
             dataset_archive = DEFAULT_DATA_ARCHIVE
