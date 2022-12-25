@@ -5,6 +5,14 @@ Adapted from  https://github.com/huggingface/diffusers/blob/main/examples/text_t
 python finetune.py
 """
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
+import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
 import argparse
 
 import tensorflow as tf
