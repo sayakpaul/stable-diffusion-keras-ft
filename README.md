@@ -16,13 +16,15 @@ Following the original script from Hugging Face, this repository also uses the [
 
 Fine-tuning code is provided in `finetune.py`. Before running training, ensure you have the dependencies (refer to `requirements.txt`) installed.
 
+You can launch training with the default arguments by running `python finetune.py`. Run `python finetune.py -h` to know about the supported command-line arguments.
+
 For avoiding OOM and faster training, it's recommended to use a V100 GPU at least. We used an A100.
 
 **Some details to note**:
 
 * Only the diffusion model is fine-tuned.The image encoder and the text encoder are kept frozen. 
 * Mixed-precision training is not yet supported. As a result, instead of 512x512 resolution, this repository uses 256x256.
-* The training code currently doesn't support distributed training. 
+* Distributed training is not yet supported. 
 * One major difference from the Hugging Face implementation is that the EMA averaging of weights doesn't follow any schedule for the decay factor.
 
 You can find the fine-tuned diffusion model weights [here](https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/tree/main). 
