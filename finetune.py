@@ -66,7 +66,9 @@ def run(args):
 
     print("Initializing trainer...")
     diffusion_ft_trainer = Trainer(
-        diffsion_model=DiffusionModel(args.img_height, args.img_width, MAX_PROMPT_LENGTH),
+        diffusion_model=DiffusionModel(
+            args.img_height, args.img_width, MAX_PROMPT_LENGTH
+        ),
         vae=ImageEncoder(args.img_height, args.img_width),
         noise_scheduler=NoiseScheduler(),
         mp=args.mp,
