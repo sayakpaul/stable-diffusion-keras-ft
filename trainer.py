@@ -86,8 +86,8 @@ class Trainer(tf.keras.Model):
         # Taken from
         # # https://github.com/keras-team/keras-cv/blob/ecfafd9ea7fe9771465903f5c1a03ceb17e333f1/keras_cv/models/stable_diffusion/stable_diffusion.py#L481
         half = dim // 2
-        log_max_preiod = tf.math.log(tf.cast(max_period, tf.float32))
-        freqs = tf.math.exp(-log_max_preiod * tf.range(0, half, dtype=tf.float32) / half)
+        log_max_period = tf.math.log(tf.cast(max_period, tf.float32))
+        freqs = tf.math.exp(-log_max_period * tf.range(0, half, dtype=tf.float32) / half)
         args = tf.convert_to_tensor([timestep], dtype=tf.float32) * freqs
         embedding = tf.concat([tf.math.cos(args), tf.math.sin(args)], 0)
         embedding = tf.reshape(embedding, [1, -1])
