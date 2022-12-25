@@ -49,7 +49,7 @@ def run(args):
         dataset_archive=args.dataset_archive,
         batch_size=args.batch_size,
         img_height=args.img_height,
-        width=args.img.width,
+        width=args.img_width,
     )
     training_dataset = data_utils.prepare_dataset()
 
