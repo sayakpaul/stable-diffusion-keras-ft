@@ -9,26 +9,37 @@ class Trainer(tf.keras.Model):
 
     def __init__(
         self,
-        diffusion_model,
-        vae,
+        diffusion_model: tf.keras.Model,
+        vae: tf.keras.Model,
         noise_scheduler,
-        mp,
+        pretrained_ckpt: str,
+        mp: bool,
         ema=0.9999,
         max_grad_norm=1.0,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.diffusion_model = diffusion_model
+        if pretrained_ckpt is not None:
+            self.diffusion_model.load_weights(pretrained_ckpt)
+            print(
+                f"Loading the provided checkpoint to initialize the diffusion model: {pretrained_ckpt}..."
+            )
+
         self.vae = vae
         self.noise_scheduler = noise_scheduler
-        self.max_grad_norm = max_grad_norm
 
-        self.ema = tf.Variable(ema, dtype="float32")
-        self.optimization_step = tf.Variable(0, dtype="int32")
-        self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
+        if ema > 0.0:
+            self.ema = tf.Variable(ema, dtype="float32")
+            self.optimization_step = tf.Variable(0, dtype="int32")
+            self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
+            self.do_ema = True
+        else:
+            self.do_ema = False
 
         self.vae.trainable = False
         self.mp = mp
+        self.max_grad_norm = max_grad_norm
 
     def train_step(self, inputs):
         images = inputs["images"]
@@ -80,11 +91,13 @@ class Trainer(tf.keras.Model):
         gradients = tape.gradient(loss, trainable_vars)
         if self.mp:
             gradients = self.optimizer.get_unscaled_gradients(gradients)
-        gradients = [tf.clip_by_norm(g, self.max_grad_norm) for g in gradients]
+        if self.max_grad_norm > 0.0:
+            gradients = [tf.clip_by_norm(g, self.max_grad_norm) for g in gradients]
         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
-        # EMA
-        self.ema_step()
+        # EMA.
+        if self.do_ema:
+            self.ema_step()
 
         return {m.name: m.result() for m in self.metrics}
 
@@ -92,8 +105,8 @@ class Trainer(tf.keras.Model):
         # Taken from
         # # https://github.com/keras-team/keras-cv/blob/ecfafd9ea7fe9771465903f5c1a03ceb17e333f1/keras_cv/models/stable_diffusion/stable_diffusion.py#L481
         half = dim // 2
-        log_max_preiod = tf.math.log(tf.cast(max_period, tf.float32))
-        freqs = tf.math.exp(-log_max_preiod * tf.range(0, half, dtype=tf.float32) / half)
+        log_max_period = tf.math.log(tf.cast(max_period, tf.float32))
+        freqs = tf.math.exp(-log_max_period * tf.range(0, half, dtype=tf.float32) / half)
         args = tf.convert_to_tensor([timestep], dtype=tf.float32) * freqs
         embedding = tf.concat([tf.math.cos(args), tf.math.sin(args)], 0)
         embedding = tf.reshape(embedding, [1, -1])
@@ -117,9 +130,17 @@ class Trainer(tf.keras.Model):
 
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
         # Overriding to help with the `ModelCheckpoint` callback.
-        self.ema_diffusion_model.save_weights(
-            filepath=filepath,
-            overwrite=overwrite,
-            save_format=save_format,
-            options=options,
-        )
+        if self.do_ema:
+            self.ema_diffusion_model.save_weights(
+                filepath=filepath,
+                overwrite=overwrite,
+                save_format=save_format,
+                options=options,
+            )
+        else:
+            self.diffusion_model.save_weights(
+                filepath=filepath,
+                overwrite=overwrite,
+                save_format=save_format,
+                options=options,
+            )

@@ -10,7 +10,7 @@ By loading this model you accept the CreativeML Open RAIL-M license at https://r
 
 ## Dataset 
 
-Following the original script from Hugging Face, this repository also uses the [Pokemon dataset](https://huggingface.co/datasets/lambdalabs/pokemon-blip-captions). But it was regenerated to suit this repository. The regenerated version of the dataset is hosted [here](https://huggingface.co/datasets/sayakpaul/pokemon-blip-original-version). Check out that link for more details.
+Following the original script from Hugging Face, this repository also uses the [Pokemon dataset](https://huggingface.co/datasets/lambdalabs/pokemon-blip-captions). But it was regenerated to work better with `tf.data`. The regenerated version of the dataset is hosted [here](https://huggingface.co/datasets/sayakpaul/pokemon-blip-original-version). Check out that link for more details.
 
 ## Training
 
@@ -28,6 +28,30 @@ For avoiding OOM and faster training, it's recommended to use a V100 GPU at leas
 * One major difference from the Hugging Face implementation is that the EMA averaging of weights doesn't follow any schedule for the decay factor.
 
 You can find the fine-tuned diffusion model weights [here](https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/tree/main). 
+
+### Training with custom data
+
+The default Pokemon dataset used in this repository comes with the following structure:
+
+```bash 
+pokemon_dataset/
+    data.csv
+    image_24.png   
+    image_3.png    
+    image_550.png  
+    image_700.png
+    ...
+```
+
+`data.csv` looks like so:
+
+![](https://i.imgur.com/AeRqWPH.png)
+
+As long as your custom dataset follows this structure, you don't need to change anything in the current codebase except for the `dataset_archive`.
+
+In case your dataset has multiple captions per image, you can randomly select one from the pool of captions per image during training.
+
+Based on the dataset, you might have to tune the hyperparameters.
 
 ## Inference
 
@@ -66,7 +90,7 @@ You can check out this [Colab Notebook] (TODO) to play with the code.
 
 ## Results
 
-Upcoming
+Upcoming (there should be note on running hyperparameter tuning as the Hugging Face tutorial)
 
 ## Acknowledgements
 
