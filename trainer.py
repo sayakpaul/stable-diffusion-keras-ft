@@ -83,6 +83,8 @@ class Trainer(tf.keras.Model):
         return {m.name: m.result() for m in self.metrics}
 
     def get_timestep_embedding(self, timestep, dim=320, max_period=10000):
+        # Taken from
+        # # https://github.com/keras-team/keras-cv/blob/ecfafd9ea7fe9771465903f5c1a03ceb17e333f1/keras_cv/models/stable_diffusion/stable_diffusion.py#L481
         half = dim // 2
         log_max_preiod = tf.math.log(tf.cast(max_period, tf.float32))
         freqs = tf.math.exp(-log_max_preiod * tf.range(0, half, dtype=tf.float32) / half)
