@@ -93,6 +93,7 @@ class Trainer(tf.keras.Model):
 
     def get_decay(self, optimization_step):
         value = (1 + optimization_step) / (10 + optimization_step)
+        value - tf.cast(value, dtype=self.ema.dtype)
         return 1 - tf.math.minimum(self.ema, value)
 
     def ema_step(self):
@@ -104,7 +105,7 @@ class Trainer(tf.keras.Model):
             self.ema_diffusion_model.trainable_variables,
         ):
             tmp = self.ema * (ema_weight - weight)
-            ema_weight.assign(tmp)
+            ema_weight.assign_sub(tmp)
 
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
         # Overriding to help with the `ModelCheckpoint` callback.
