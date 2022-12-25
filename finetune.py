@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument("--beta_1", default=0.9, type=float)
     parser.add_argument("--beta_2", default=0.999, type=float)
     parser.add_argument("--epsilon", default=1e-08, type=float)
-    parser.add_argument("--batch_size", default=5, type=int)
+    parser.add_argument("--batch_size", default=4, type=int)
     parser.add_argument("--num_epochs", default=100, type=int)
     parser.add_argument(
         "--mp", action="store_true", help="Whether to use mixed-precision."
