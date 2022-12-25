@@ -19,6 +19,7 @@ import tensorflow as tf
 from keras_cv.models.stable_diffusion.diffusion_model import DiffusionModel
 from keras_cv.models.stable_diffusion.image_encoder import ImageEncoder
 from keras_cv.models.stable_diffusion.noise_scheduler import NoiseScheduler
+from tensorflow.keras import mixed_precision
 
 from datasets import DatasetUtils
 from trainer import Trainer
@@ -40,10 +41,20 @@ def parse_args():
     parser.add_argument("--epsilon", default=1e-08, type=float)
     parser.add_argument("--batch_size", default=5, type=int)
     parser.add_argument("--num_epochs", default=100, type=int)
+    parser.add_argument(
+        "--mp", action="store_true", help="Whether to use mixed-precision."
+    )
     return parser.parse_args()
 
 
 def run(args):
+    if args.mp:
+        print("Enabling mixed-precision...")
+        policy = mixed_precision.Policy("mixed_float16")
+        mixed_precision.set_global_policy(policy)
+        assert policy.compute_dtype == "float16"
+        assert policy.variable_dtype == "float32"
+
     print("Initializing dataset...")
     data_utils = DatasetUtils(
         dataset_archive=args.dataset_archive,
@@ -55,9 +66,10 @@ def run(args):
 
     print("Initializing trainer...")
     diffusion_ft_trainer = Trainer(
-        DiffusionModel(args.img_height, args.img_width, MAX_PROMPT_LENGTH),
-        ImageEncoder(args.img_height, args.img_width),
-        NoiseScheduler(),
+        diffsion_model=DiffusionModel(args.img_height, args.img_width, MAX_PROMPT_LENGTH),
+        vae=ImageEncoder(args.img_height, args.img_width),
+        noise_scheduler=NoiseScheduler(),
+        mp=args.mp,
     )
 
     print("Initializing optimizer...")
@@ -68,6 +80,8 @@ def run(args):
         beta_2=args.beta_2,
         epsilon=args.epsilon,
     )
+    if args.mp:
+        optimizer = mixed_precision.LossScaleOptimizer(optimizer)
 
     print("Compiling trainer...")
     diffusion_ft_trainer.compile(optimizer=optimizer, loss="mse")

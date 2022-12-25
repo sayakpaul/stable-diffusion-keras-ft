@@ -12,6 +12,7 @@ class Trainer(tf.keras.Model):
         diffusion_model,
         vae,
         noise_scheduler,
+        mp,
         ema=0.9999,
         max_grad_norm=1.0,
         **kwargs
@@ -26,6 +27,7 @@ class Trainer(tf.keras.Model):
         self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
 
         self.vae.trainable = False
+        self.mp = mp
 
     def train_step(self, inputs):
         images = inputs["images"]
@@ -67,10 +69,14 @@ class Trainer(tf.keras.Model):
             loss = self.compiled_loss(
                 target, model_pred, regularization_losses=self.losses
             )
+            if self.mp:
+                loss = self.optimizer.get_scaled_loss(loss)
 
         # Update parameters of the diffusion model.
         trainable_vars = self.diffusion_model.trainable_variables
         gradients = tape.gradient(loss, trainable_vars)
+        if self.mp:
+            gradients = self.optimizer.get_unscaled_gradients(gradients)
         gradients = [tf.clip_by_norm(g, self.max_grad_norm) for g in gradients]
         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
