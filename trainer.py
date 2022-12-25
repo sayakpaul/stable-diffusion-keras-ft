@@ -49,7 +49,9 @@ class Trainer(tf.keras.Model):
 
             # Add noise to the latents according to the noise magnitude at each timestep
             # (this is the forward diffusion process)
-            noisy_latents = self.noise_scheduler.add_noise(latents, noise, timesteps)
+            noisy_latents = self.noise_scheduler.add_noise(
+                tf.cast(latents, noise.dtype), noise, timesteps
+            )
 
             # Get the target for loss depending on the prediction type
             # just the sampled noise for now.
