@@ -29,6 +29,30 @@ For avoiding OOM and faster training, it's recommended to use a V100 GPU at leas
 
 You can find the fine-tuned diffusion model weights [here](https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/tree/main). 
 
+### Training with custom data
+
+The default Pokemon dataset used in this repository comes with the following structure:
+
+```bash 
+pokemon_dataset/
+    data.csv
+    image_24.png   
+    image_3.png    
+    image_550.png  
+    image_700.png
+    ...
+```
+
+`data.csv` looks like so:
+
+![](https://i.imgur.com/AeRqWPH.png)
+
+As long as your custom dataset follows this structure, you don't need to change anything in the current codebase except for the `dataset_archive`.
+
+In case your dataset has multiple captions per image, you can randomly select one from the pool of captions per image during training.
+
+Based on the dataset, you might have to tune the hyperparameters.
+
 ## Inference
 
 ```py
@@ -66,7 +90,7 @@ You can check out this [Colab Notebook] (TODO) to play with the code.
 
 ## Results
 
-Upcoming
+Upcoming (there should be note on running hyperparameter tuning as the Hugging Face tutorial)
 
 ## Acknowledgements
 
