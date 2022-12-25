@@ -86,7 +86,7 @@ generated_images = pokemon_model.text_to_image("Yoda", batch_size=3)
 plot_images(generated_images, "Fine-tuned on the Pokemon dataset")
 ```
 
-You can check out this [Colab Notebook] (TODO) to play with the code.
+You can check out this [Colab Notebook](https://colab.research.google.com/drive/1ekQmwepOdRvLpGrn-puQuEUC6-Jr9TEp?usp=sharing) to play with the code.
 
 ## Results
 
