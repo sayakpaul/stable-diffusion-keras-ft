@@ -94,6 +94,7 @@ class Trainer(tf.keras.Model):
         return embedding  # Excluding the repeat.
 
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
+        # Overriding to help with the `ModelCheckpoint` callback.
         self.ema_diffusion_model.save_weights(
             filepath=filepath,
             overwrite=overwrite,
