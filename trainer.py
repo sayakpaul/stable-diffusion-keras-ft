@@ -22,7 +22,8 @@ class Trainer(tf.keras.Model):
         self.noise_scheduler = noise_scheduler
         self.max_grad_norm = max_grad_norm
 
-        self.ema = ema
+        self.ema = tf.Variable(ema, dtype="float32")
+        self.optimization_step = tf.Variable(0, dtype="int32")
         self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
 
         self.vae.trainable = False
@@ -75,10 +76,7 @@ class Trainer(tf.keras.Model):
         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
         # EMA
-        for weight, ema_weight in zip(
-            self.diffusion_model.weights, self.ema_diffusion_model.weights
-        ):
-            ema_weight.assign(self.ema * ema_weight + (1 - self.ema) * weight)
+        self.ema_step()
 
         return {m.name: m.result() for m in self.metrics}
 
@@ -92,6 +90,21 @@ class Trainer(tf.keras.Model):
         embedding = tf.concat([tf.math.cos(args), tf.math.sin(args)], 0)
         embedding = tf.reshape(embedding, [1, -1])
         return embedding  # Excluding the repeat.
+
+    def get_decay(self, optimization_step):
+        value = (1 + optimization_step) / (10 + optimization_step)
+        return 1 - tf.math.minimum(self.ema, value)
+
+    def ema_step(self):
+        self.optimization_step.assign_add(1)
+        self.ema.assign(self.get_decay(self.optimization_step))
+
+        for weight, ema_weight in zip(
+            self.diffusion_model.trainable_variables,
+            self.ema_diffusion_model.trainable_variables,
+        ):
+            tmp = self.ema * (ema_weight - weight)
+            ema_weight.assign(tmp)
 
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
         # Overriding to help with the `ModelCheckpoint` callback.
