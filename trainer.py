@@ -93,7 +93,7 @@ class Trainer(tf.keras.Model):
 
     def get_decay(self, optimization_step):
         value = (1 + optimization_step) / (10 + optimization_step)
-        value - tf.cast(value, dtype=self.ema.dtype)
+        value = tf.cast(value, dtype=self.ema.dtype)
         return 1 - tf.math.minimum(self.ema, value)
 
     def ema_step(self):
