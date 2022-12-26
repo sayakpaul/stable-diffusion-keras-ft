@@ -92,7 +92,7 @@ def run(args):
             args.img_height, args.img_width, MAX_PROMPT_LENGTH
         ),
         vae=ImageEncoder(args.img_height, args.img_width),
-        noise_escheduler=NoiseScheduler(),
+        noise_scheduler=NoiseScheduler(),
         pretrained_ckpt=args.pretrained_ckpt,
         mp=args.mp,
         ema=args.ema,
