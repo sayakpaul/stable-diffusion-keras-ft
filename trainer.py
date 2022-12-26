@@ -2,6 +2,7 @@ import copy
 
 import tensorflow as tf
 import tensorflow.experimental.numpy as tnp
+from keras_cv.models.stable_diffusion.noise_scheduler import NoiseScheduler
 
 
 class Trainer(tf.keras.Model):
@@ -11,7 +12,7 @@ class Trainer(tf.keras.Model):
         self,
         diffusion_model: tf.keras.Model,
         vae: tf.keras.Model,
-        noise_scheduler,
+        noise_scheduler: NoiseScheduler,
         pretrained_ckpt: str,
         mp: bool,
         ema=0.9999,
