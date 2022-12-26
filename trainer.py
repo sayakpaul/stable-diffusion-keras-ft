@@ -2,6 +2,7 @@ import copy
 
 import tensorflow as tf
 import tensorflow.experimental.numpy as tnp
+from keras_cv.models.stable_diffusion.noise_scheduler import NoiseScheduler
 
 
 class Trainer(tf.keras.Model):
@@ -11,27 +12,35 @@ class Trainer(tf.keras.Model):
         self,
         diffusion_model: tf.keras.Model,
         vae: tf.keras.Model,
-        noise_scheduler,
-        ckpt_path: str,
+        noise_scheduler: NoiseScheduler,
         pretrained_ckpt: str,
+        mp: bool,
         ema=0.9999,
         max_grad_norm=1.0,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.diffusion_model = diffusion_model
         if pretrained_ckpt is not None:
             self.diffusion_model.load_weights(pretrained_ckpt)
+            print(
+                f"Loading the provided checkpoint to initialize the diffusion model: {pretrained_ckpt}..."
+            )
 
         self.vae = vae
         self.noise_scheduler = noise_scheduler
-        self.max_grad_norm = max_grad_norm
 
-        self.ema = ema
-        self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
+        if ema > 0.0:
+            self.ema = tf.Variable(ema, dtype="float32")
+            self.optimization_step = tf.Variable(0, dtype="int32")
+            self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
+            self.do_ema = True
+        else:
+            self.do_ema = False
 
-        self.ckpt_path = ckpt_path
         self.vae.trainable = False
+        self.mp = mp
+        self.max_grad_norm = max_grad_norm
 
     def train_step(self, inputs):
         images = inputs["images"]
@@ -53,7 +62,9 @@ class Trainer(tf.keras.Model):
 
             # Add noise to the latents according to the noise magnitude at each timestep
             # (this is the forward diffusion process)
-            noisy_latents = self.noise_scheduler.add_noise(latents, noise, timesteps)
+            noisy_latents = self.noise_scheduler.add_noise(
+                tf.cast(latents, noise.dtype), noise, timesteps
+            )
 
             # Get the target for loss depending on the prediction type
             # just the sampled noise for now.
@@ -73,18 +84,21 @@ class Trainer(tf.keras.Model):
             loss = self.compiled_loss(
                 target, model_pred, regularization_losses=self.losses
             )
+            if self.mp:
+                loss = self.optimizer.get_scaled_loss(loss)
 
         # Update parameters of the diffusion model.
         trainable_vars = self.diffusion_model.trainable_variables
         gradients = tape.gradient(loss, trainable_vars)
-        gradients = [tf.clip_by_norm(g, self.max_grad_norm) for g in gradients]
+        if self.mp:
+            gradients = self.optimizer.get_unscaled_gradients(gradients)
+        if self.max_grad_norm > 0.0:
+            gradients = [tf.clip_by_norm(g, self.max_grad_norm) for g in gradients]
         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
-        # EMA
-        for weight, ema_weight in zip(
-            self.diffusion_model.weights, self.ema_diffusion_model.weights
-        ):
-            ema_weight.assign(self.ema * ema_weight + (1 - self.ema) * weight)
+        # EMA.
+        if self.do_ema:
+            self.ema_step()
 
         return {m.name: m.result() for m in self.metrics}
 
@@ -99,11 +113,35 @@ class Trainer(tf.keras.Model):
         embedding = tf.reshape(embedding, [1, -1])
         return embedding  # Excluding the repeat.
 
+    def get_decay(self, optimization_step):
+        value = (1 + optimization_step) / (10 + optimization_step)
+        value = tf.cast(value, dtype=self.ema.dtype)
+        return 1 - tf.math.minimum(self.ema, value)
+
+    def ema_step(self):
+        self.optimization_step.assign_add(1)
+        self.ema.assign(self.get_decay(self.optimization_step))
+
+        for weight, ema_weight in zip(
+            self.diffusion_model.trainable_variables,
+            self.ema_diffusion_model.trainable_variables,
+        ):
+            tmp = self.ema * (ema_weight - weight)
+            ema_weight.assign_sub(tmp)
+
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
         # Overriding to help with the `ModelCheckpoint` callback.
-        self.ema_diffusion_model.save_weights(
-            filepath=filepath,
-            overwrite=overwrite,
-            save_format=save_format,
-            options=options,
-        )
+        if self.do_ema:
+            self.ema_diffusion_model.save_weights(
+                filepath=filepath,
+                overwrite=overwrite,
+                save_format=save_format,
+                options=options,
+            )
+        else:
+            self.diffusion_model.save_weights(
+                filepath=filepath,
+                overwrite=overwrite,
+                save_format=save_format,
+                options=options,
+            )
