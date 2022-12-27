@@ -86,9 +86,9 @@ generated_images = pokemon_model.text_to_image("Yoda", batch_size=3)
 plot_images(generated_images, "Fine-tuned on the Pokemon dataset")
 ```
 
-You can check out this [Colab Notebook](https://colab.research.google.com/drive/1ekQmwepOdRvLpGrn-puQuEUC6-Jr9TEp?usp=sharing) to play with the code.
+You can check out this [Colab Notebook](https://colab.research.google.com/github/sayakpaul/stable-diffusion-keras-ft/blob/main/notebooks/generate_images_with_finetuned_stable_diffusion.ipynb) to play with the code.
 
-## Results
+## Results
 
 Upcoming (there should be note on running hyperparameter tuning as the Hugging Face tutorial)
 
