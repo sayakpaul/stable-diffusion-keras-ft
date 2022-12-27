@@ -6,7 +6,9 @@ This repository provides code for fine-tuning [Stable Diffusion](https://hugging
 
 By loading this model you accept the CreativeML Open RAIL-M license at https://raw.githubusercontent.com/CompVis/stable-diffusion/main/LICENSE.
 
-[Add results]
+<div align="center">
+<img src="https://i.ibb.co/t3qmtTS/image.png"/>
+</div>
 
 **Table of contents**:
 
@@ -26,7 +28,7 @@ Fine-tuning code is provided in `finetune.py`. Before running training, ensure y
 
 You can launch training with the default arguments by running `python finetune.py`. Run `python finetune.py -h` to know about the supported command-line arguments. You can enable mixed-precision training by passing the `--mp` flag.
 
-For avoiding OOM and faster training, it's recommended to use a V100 GPU at least. We used an A100.  to `finetune.py`. 
+For avoiding OOM and faster training, it's recommended to use a V100 GPU at least. We used an A100.   
 
 **Some important details to note**:
 
@@ -111,15 +113,59 @@ You can check out this [Colab Notebook](https://colab.research.google.com/github
 
 ## Results
 
-Initially, we fine-tuned the model on a resolution of 256x256. Here are some results along with comparisons to the results of the original model. 
+Initially, we fine-tuned the model on a resolution of 256x256. Here are some results along with comparisons to the results
+of the original model. 
 
+<div align="center">
+<table>
+  <tr>
+    <th>Images</img></th>
+    <th>Prompts</img></th>
+  </tr>
+  <tr>
+    <td><img src="https://i.ibb.co/t2Jfc0P/image.png"></img></td>
+    <td>Yoda</td>
+  </tr>
+  <tr>
+    <td><img src="https://i.ibb.co/9n4xRgy/image.png"></img></td>
+    <td>robotic cat with wings</td>
+  </tr>
+  <tr>
+    <td><img src="https://i.ibb.co/25jyDK4/image.png"></img></td>
+    <td>Hello Kitty</td>
+  </tr>
+</table>
+</div>
 
 We can see that the fine-tuned model has more stable outputs than the original model. Even though the results can be aesthetically improved much more, the fine-tuning effects are visible. Also, we followed the same hyperparameters from [Hugging Face's script](https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py) for the 256x256 resolution (apart from number of epochs and batch size). With 
 better hyperparameters, the results will likely improve.
 
 For the 512x512 resolution, we observe something similar. So, we experimented with the `unconditional_guidance_scale` parameter and noticed that when it's set to 50 (while keeping the other arguments fixed), the results came out better.
 
+<div align="center">
+<table>
+  <tr>
+    <th>Images</img></th>
+    <th>Prompts</img></th>
+  </tr>
+  <tr>
+    <td><img src="https://i.ibb.co/9N6KdTW/image.png"></img></td>
+    <td>Yoda</td>
+  </tr>
+  <tr>
+    <td><img src="https://i.ibb.co/D73MV3W/image.png"></img></td>
+    <td>robotic cat with wings</td>
+  </tr>
+  <tr>
+    <td><img src="https://i.ibb.co/Bj9KcCz/image.png"></img></td>
+    <td>Hello Kitty</td>
+  </tr>
+</table>
+</div>
+
 **Note**: Fine-tuning on the 512x512 is still in progress as of this writing. But it takes a lot of time to complete a single epoch without the presence of distributed training and gradient accumulation. The above results are from the checkpoint derived after 20th epoch. 
+
+With a similar recipe (but trained for more optimization steps), Lambda Labs demonstrate [amazing results](https://github.com/LambdaLabsML/examples/tree/main/stable-diffusion-finetuning).
 
 ## Acknowledgements
 
