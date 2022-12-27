@@ -119,7 +119,7 @@ better hyperparameters, the results will likely improve.
 
 For the 512x512 resolution, we observe something similar. So, we experimented with the `unconditional_guidance_scale` parameter and noticed that when it's set to 50 (while keeping the other arguments fixed), the results came out better.
 
-**Note**: Fine-tuning on the 512x512 is still in progress as of this writing. But it takes a lot of time to complete a single epoch without the presence of distributed training and gradient accumulation. The above results are from the checkpoint derived after 20the epoch. 
+**Note**: Fine-tuning on the 512x512 is still in progress as of this writing. But it takes a lot of time to complete a single epoch without the presence of distributed training and gradient accumulation. The above results are from the checkpoint derived after 20th epoch. 
 
 ## Acknowledgements
 
