@@ -87,11 +87,17 @@ def run(args):
         + f"_mp_{args.mp}"
         + ".h5"
     )
+    image_encoder = ImageEncoder(args.img_height, args.img_width)
     diffusion_ft_trainer = Trainer(
         diffusion_model=DiffusionModel(
             args.img_height, args.img_width, MAX_PROMPT_LENGTH
         ),
-        vae=ImageEncoder(args.img_height, args.img_width),
+        # Remove the top layer from the encoder, which cuts off the variance and only returns
+        # the mean
+        vae=tf.keras.Model(
+            image_encoder.input,
+            image_encoder.layers[-2].output,
+        ),
         noise_scheduler=NoiseScheduler(),
         pretrained_ckpt=args.pretrained_ckpt,
         mp=args.mp,
