@@ -49,8 +49,7 @@ class Trainer(tf.keras.Model):
 
         with tf.GradientTape() as tape:
             # Project image into the latent space.
-            latents = self.vae(images, training=False)
-            latents = self.sample_from_encoder_outputs(latents)
+            latents = self.sample_from_encoder_outputs(self.vae(images, training=False))
             latents = latents * 0.18215
 
             # Sample noise that we'll add to the latents
@@ -75,12 +74,12 @@ class Trainer(tf.keras.Model):
             # https://github.com/huggingface/diffusers/blob/9be94d9c6659f7a0a804874f445291e3a84d61d4/src/diffusers/schedulers/scheduling_ddpm.py#L352
 
             # Predict the noise residual and compute loss
-            timestep_embedding = tf.map_fn(
+            timestep_embeddings = tf.map_fn(
                 lambda t: self.get_timestep_embedding(t), timesteps, dtype=tf.float32
             )
-            timestep_embedding = tf.squeeze(timestep_embedding, 1)
+            timestep_embeddings = tf.squeeze(timestep_embeddings, 1)
             model_pred = self.diffusion_model(
-                [noisy_latents, timestep_embedding, encoded_text], training=True
+                [noisy_latents, timestep_embeddings, encoded_text], training=True
             )
             loss = self.compiled_loss(target, model_pred)
             if self.mp:
