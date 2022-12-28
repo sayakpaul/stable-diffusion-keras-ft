@@ -50,6 +50,7 @@ class Trainer(tf.keras.Model):
         with tf.GradientTape() as tape:
             # Project image into the latent space.
             latents = self.vae(images, training=False)
+            latents = self.sample_from_encoder_outputs(latents)
             latents = latents * 0.18215
 
             # Sample noise that we'll add to the latents
@@ -128,6 +129,13 @@ class Trainer(tf.keras.Model):
         ):
             tmp = self.ema * (ema_weight - weight)
             ema_weight.assign_sub(tmp)
+
+    def sample_from_encoder_outputs(self, outputs):
+        mean, logvar = tf.split(outputs, 2, axis=-1)
+        logvar = tf.clip_by_value(logvar, -30.0, 20.0)
+        std = tf.exp(0.5 * logvar)
+        sample = tf.random.normal(tf.shape(mean))
+        return mean + std * sample
 
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
         # Overriding to help with the `ModelCheckpoint` callback.
