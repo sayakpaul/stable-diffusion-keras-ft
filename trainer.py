@@ -82,9 +82,7 @@ class Trainer(tf.keras.Model):
             model_pred = self.diffusion_model(
                 [noisy_latents, timestep_embedding, encoded_text], training=True
             )
-            loss = self.compiled_loss(
-                target, model_pred, regularization_losses=self.losses
-            )
+            loss = self.compiled_loss(target, model_pred)
             if self.mp:
                 loss = self.optimizer.get_scaled_loss(loss)
 
@@ -134,7 +132,7 @@ class Trainer(tf.keras.Model):
         mean, logvar = tf.split(outputs, 2, axis=-1)
         logvar = tf.clip_by_value(logvar, -30.0, 20.0)
         std = tf.exp(0.5 * logvar)
-        sample = tf.random.normal(tf.shape(mean))
+        sample = tf.random.normal(tf.shape(mean), dtype=mean.dtype)
         return mean + std * sample
 
     def save_weights(self, filepath, overwrite=True, save_format=None, options=None):
