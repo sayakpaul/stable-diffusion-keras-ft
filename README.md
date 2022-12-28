@@ -10,6 +10,8 @@ By loading this model you accept the CreativeML Open RAIL-M license at https://r
 <img src="https://i.ibb.co/t3qmtTS/image.png"/>
 </div>
 
+This repository has a sister repository ([keras-sd-serving](https://github.com/deep-diver/keras-sd-serving)) that covers various deployment patterns for Stable Diffusion. 
+
 **Table of contents**:
 
 * [Dataset](#dataset)
@@ -27,6 +29,8 @@ Following the original script from Hugging Face, this repository also uses the [
 Fine-tuning code is provided in `finetune.py`. Before running training, ensure you have the dependencies (refer to `requirements.txt`) installed.
 
 You can launch training with the default arguments by running `python finetune.py`. Run `python finetune.py -h` to know about the supported command-line arguments. You can enable mixed-precision training by passing the `--mp` flag.
+
+When you launch training, a diffusion model checkpoint will be generated epoch-wise only if the current loss is lower than the previous one.
 
 For avoiding OOM and faster training, it's recommended to use a V100 GPU at least. We used an A100.   
 
