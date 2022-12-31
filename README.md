@@ -7,7 +7,7 @@ This repository provides code for fine-tuning [Stable Diffusion](https://hugging
 By loading this model you accept the CreativeML Open RAIL-M license at https://raw.githubusercontent.com/CompVis/stable-diffusion/main/LICENSE.
 
 <div align="center">
-<img src="https://i.ibb.co/t3qmtTS/image.png"/>
+<img src="https://i.imgur.com/RtVBPzp.png"/>
 </div>
 
 This repository has a sister repository ([keras-sd-serving](https://github.com/deep-diver/keras-sd-serving)) that covers various deployment patterns for Stable Diffusion. 
@@ -37,7 +37,7 @@ For avoiding OOM and faster training, it's recommended to use a V100 GPU at leas
 **Some important details to note**:
 
 * Distributed training is not yet supported. Gradient accumulation and gradient checkpointing are also not supported.
-* Only the diffusion model is fine-tuned. The image encoder and the text encoder are kept frozen. 
+* Only the diffusion model is fine-tuned. The VAE and the text encoder are kept frozen. 
 
 
 **Training details**:
@@ -48,7 +48,7 @@ with these two different resolutions. Since we didn't use gradient accumulation,
 * 256x256: `python finetune.py --batch_size 4 --num_epochs 577`
 * 512x512: `python finetune.py --img_height 512 --img_width 512 --batch_size 1 --num_epochs 72 --mp`
 
-For 256x256 resolution, we intentionally reduced the number of epochs to fine-tune to save compute time.
+For 256x256 resolution, we intentionally reduced the number of epochs to save compute time.
 
 **Fine-tuned weights**:
 
@@ -85,7 +85,7 @@ import keras_cv
 import matplotlib.pyplot as plt
 from tensorflow import keras
 
-IMG_HEIGHT = IMG_WIDTH = 256
+IMG_HEIGHT = IMG_WIDTH = 512
 
 
 def plot_images(images, title):
@@ -99,7 +99,7 @@ def plot_images(images, title):
 
 # We just have to load the fine-tuned weights into the diffusion model.
 weights_path = keras.utils.get_file(
-    origin="https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/resolve/main/ema_diffusion_model.h5"
+    origin="https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/resolve/main/ckpt_epochs_72_res_512_mp_True.h5"
 )
 pokemon_model = keras_cv.models.StableDiffusion(
     img_height=IMG_HEIGHT, img_width=IMG_WIDTH
@@ -113,59 +113,61 @@ plot_images(generated_images, "Fine-tuned on the Pokemon dataset")
 
 You can bring in your `weights_path` (should be compatible with the `diffusion_model`) and reuse the code snippet. 
 
-You can check out this [Colab Notebook](https://colab.research.google.com/github/sayakpaul/stable-diffusion-keras-ft/blob/main/notebooks/generate_images_with_finetuned_stable_diffusion.ipynb) to play with the code.
+Check out this [Colab Notebook](https://colab.research.google.com/github/sayakpaul/stable-diffusion-keras-ft/blob/main/notebooks/generate_images_with_finetuned_stable_diffusion.ipynb) to play with the inference code.
 
 ## Results
 
 Initially, we fine-tuned the model on a resolution of 256x256. Here are some results along with comparisons to the results
 of the original model. 
 
-<div align="center">
+<div align="left">
 <table>
   <tr>
     <th>Images</img></th>
     <th>Prompts</img></th>
   </tr>
   <tr>
-    <td><img src="https://i.ibb.co/t2Jfc0P/image.png"></img></td>
+    <td><img src="https://i.imgur.com/6eT1hPa.png"></img></td>
     <td>Yoda</td>
   </tr>
   <tr>
-    <td><img src="https://i.ibb.co/9n4xRgy/image.png"></img></td>
+    <td><img src="https://i.imgur.com/q4tmr4a.png"></img></td>
     <td>robotic cat with wings</td>
   </tr>
   <tr>
-    <td><img src="https://i.ibb.co/25jyDK4/image.png"></img></td>
+    <td><img src="https://i.imgur.com/kaD8uRp.png> "></img></td>
     <td>Hello Kitty</td>
   </tr>
 </table>
-</div>
+<sub><a href="https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/resolve/main/ckpt_epochs_577_res_256_mp_False.h5">Weights</a></sub>
+</div><br>
 
 We can see that the fine-tuned model has more stable outputs than the original model. Even though the results can be aesthetically improved much more, the fine-tuning effects are visible. Also, we followed the same hyperparameters from [Hugging Face's script](https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py) for the 256x256 resolution (apart from number of epochs and batch size). With 
 better hyperparameters, the results will likely improve.
 
-For the 512x512 resolution, we observe something similar. So, we experimented with the `unconditional_guidance_scale` parameter and noticed that when it's set to 50 (while keeping the other arguments fixed), the results came out better.
+For the 512x512 resolution, we observe something similar. So, we experimented with the `unconditional_guidance_scale` parameter and noticed that when it's set to 40 (while keeping the other arguments fixed), the results came out better.
 
-<div align="center">
+<div align="left">
 <table>
   <tr>
     <th>Images</img></th>
     <th>Prompts</img></th>
   </tr>
   <tr>
-    <td><img src="https://i.ibb.co/9N6KdTW/image.png"></img></td>
+    <td><img src="https://i.imgur.com/Vq3kXRG.png"></img></td>
     <td>Yoda</td>
   </tr>
   <tr>
-    <td><img src="https://i.ibb.co/D73MV3W/image.png"></img></td>
+    <td><img src="https://i.imgur.com/sAdUtgc.png"></img></td>
     <td>robotic cat with wings</td>
   </tr>
   <tr>
-    <td><img src="https://i.ibb.co/Bj9KcCz/image.png"></img></td>
+    <td><img src="https://i.imgur.com/AizBR2Z.png"></img></td>
     <td>Hello Kitty</td>
   </tr>
 </table>
-</div>
+<sub><a href="https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/resolve/main/ckpt_epochs_72_res_512_mp_True.h5">Weights</a></sub>
+</div><br>
 
 **Note**: Fine-tuning on the 512x512 is still in progress as of this writing. But it takes a lot of time to complete a single epoch without the presence of distributed training and gradient accumulation. The above results are from the checkpoint derived after 20th epoch. 
 
