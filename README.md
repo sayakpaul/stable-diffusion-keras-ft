@@ -10,7 +10,12 @@ By loading this model you accept the CreativeML Open RAIL-M license at https://r
 <img src="https://i.imgur.com/RtVBPzp.png"/>
 </div>
 
-This repository has a sister repository ([keras-sd-serving](https://github.com/deep-diver/keras-sd-serving)) that covers various deployment patterns for Stable Diffusion. 
+If you're just looking for the accompanying resources of this repository, here are the links:
+
+* [Inference Colab Notebook](https://colab.research.google.com/github/sayakpaul/stable-diffusion-keras-ft/blob/main/notebooks/generate_images_with_finetuned_stable_diffusion.ipynb)
+* Blog post (upcoming)
+* [Interactive Hugging Face Space application](https://huggingface.co/spaces/sayakpaul/pokemon-sd-kerascv)
+* [Fine-tuned model weights](https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned)
 
 **Table of contents**:
 
@@ -19,6 +24,8 @@ This repository has a sister repository ([keras-sd-serving](https://github.com/d
 * [Inference](#inference)
 * [Results](#results)
 * [Acknowledgements](#acknowledgements)
+
+> This repository has a sister repository ([keras-sd-serving](https://github.com/deep-diver/keras-sd-serving)) that covers various deployment patterns for Stable Diffusion. 
 
 ## Dataset 
 
