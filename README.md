@@ -7,7 +7,7 @@ This repository provides code for fine-tuning [Stable Diffusion](https://hugging
 By loading this model you accept the CreativeML Open RAIL-M license at https://raw.githubusercontent.com/CompVis/stable-diffusion/main/LICENSE.
 
 <div align="center">
-<img src="https://i.imgur.com/RtVBPzp.png"/>
+<img src="https://i.imgur.com/X4m614M.png"/>
 </div>
 
 If you're just looking for the accompanying resources of this repository, here are the links:
@@ -161,22 +161,22 @@ For the 512x512 resolution, we observe something similar. So, we experimented wi
     <th>Prompts</img></th>
   </tr>
   <tr>
-    <td><img src="https://i.imgur.com/Vq3kXRG.png"></img></td>
+    <td><img src="https://i.imgur.com/NfM3iOl.png"></img></td>
     <td>Yoda</td>
   </tr>
   <tr>
-    <td><img src="https://i.imgur.com/sAdUtgc.png"></img></td>
+    <td><img src="https://i.imgur.com/ow8sKMH.png"></img></td>
     <td>robotic cat with wings</td>
   </tr>
   <tr>
-    <td><img src="https://i.imgur.com/AizBR2Z.png"></img></td>
+    <td><img src="https://i.imgur.com/AG10vu5.png"></img></td>
     <td>Hello Kitty</td>
   </tr>
 </table>
 <sub><a href="https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/resolve/main/ckpt_epochs_72_res_512_mp_True.h5">Weights</a></sub>
 </div><br>
 
-**Note**: Fine-tuning on the 512x512 is still in progress as of this writing. But it takes a lot of time to complete a single epoch without the presence of distributed training and gradient accumulation. The above results are from the checkpoint derived after 20th epoch. 
+**Note**: Fine-tuning on the 512x512 is still in progress as of this writing. But it takes a lot of time to complete a single epoch without the presence of distributed training and gradient accumulation. The above results are from the checkpoint derived after 60th epoch. 
 
 With a similar recipe (but trained for more optimization steps), Lambda Labs demonstrate [amazing results](https://github.com/LambdaLabsML/examples/tree/main/stable-diffusion-finetuning).
 
