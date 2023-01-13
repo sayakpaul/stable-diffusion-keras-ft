@@ -13,7 +13,7 @@ By loading this model you accept the CreativeML Open RAIL-M license at https://r
 If you're just looking for the accompanying resources of this repository, here are the links:
 
 * [Inference Colab Notebook](https://colab.research.google.com/github/sayakpaul/stable-diffusion-keras-ft/blob/main/notebooks/generate_images_with_finetuned_stable_diffusion.ipynb)
-* Blog post (upcoming)
+* [Blog post on keras.io](https://keras.io/examples/generative/finetune_stable_diffusion/)
 * [Interactive Hugging Face Space application](https://huggingface.co/spaces/sayakpaul/pokemon-sd-kerascv)
 * [Fine-tuned model weights](https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned)
 
