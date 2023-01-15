@@ -27,6 +27,8 @@ If you're just looking for the accompanying resources of this repository, here a
 
 > This repository has a sister repository ([keras-sd-serving](https://github.com/deep-diver/keras-sd-serving)) that covers various deployment patterns for Stable Diffusion. 
 
+**Update January 13 2023**: This project [secured 2nd place](https://discuss.tensorflow.org/t/announcing-the-keras-community-prize-first-edition/13148/29) at the first-ever Keras Community Prize Competition organized by Google.
+
 ## Dataset 
 
 Following the original script from Hugging Face, this repository also uses the [Pokemon dataset](https://huggingface.co/datasets/lambdalabs/pokemon-blip-captions). But it was regenerated to work better with `tf.data`. The regenerated version of the dataset is hosted [here](https://huggingface.co/datasets/sayakpaul/pokemon-blip-original-version). Check out that link for more details.
