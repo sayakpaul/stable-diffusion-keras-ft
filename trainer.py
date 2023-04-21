@@ -1,6 +1,7 @@
 import copy
 
 import tensorflow as tf
+from tensorflow import keras
 import tensorflow.experimental.numpy as tnp
 from keras_cv.models.stable_diffusion.noise_scheduler import NoiseScheduler
 
@@ -33,7 +34,7 @@ class Trainer(tf.keras.Model):
         if ema > 0.0:
             self.ema = tf.Variable(ema, dtype="float32")
             self.optimization_step = tf.Variable(0, dtype="int32")
-            self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
+            self.ema_diffusion_model = keras.models.clone_model(self.diffusion_model)
             self.do_ema = True
         else:
             self.do_ema = False

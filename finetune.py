@@ -4,7 +4,7 @@ Adapted from  https://github.com/huggingface/diffusers/blob/main/examples/text_t
 # Usage
 python finetune.py
 """
-
+import json
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -36,6 +36,7 @@ def parse_args():
     parser.add_argument("--dataset_archive", default=None, type=str)
     parser.add_argument("--img_height", default=256, type=int)
     parser.add_argument("--img_width", default=256, type=int)
+    parser.add_argument("--log_dir", type=str)
     # Optimization hyperparameters.
     parser.add_argument("--lr", default=1e-5, type=float)
     parser.add_argument("--wd", default=1e-2, type=float)
@@ -47,6 +48,7 @@ def parse_args():
     # Training hyperparameters.
     parser.add_argument("--batch_size", default=4, type=int)
     parser.add_argument("--num_epochs", default=100, type=int)
+
     # Others.
     parser.add_argument(
         "--mp", action="store_true", help="Whether to use mixed-precision."
@@ -70,6 +72,11 @@ def run(args):
         assert policy.compute_dtype == "float16"
         assert policy.variable_dtype == "float32"
 
+    print("Saving config...")
+    config = json.dumps(args.__dict__)
+    with tf.io.gfile.GFile(os.path.join(args.log_dir, 'config.json'), 'w') as f:
+        f.write(config)
+
     print("Initializing dataset...")
     data_utils = DatasetUtils(
         dataset_archive=args.dataset_archive,
@@ -80,13 +87,14 @@ def run(args):
     training_dataset = data_utils.prepare_dataset()
 
     print("Initializing trainer...")
-    ckpt_path = (
+    ckpt_name = (
         CKPT_PREFIX
         + f"_epochs_{args.num_epochs}"
         + f"_res_{args.img_height}"
         + f"_mp_{args.mp}"
         + ".h5"
     )
+    ckpt_path = os.path.join(args.log_dir, "checkpoint", ckpt_name)
     image_encoder = ImageEncoder(args.img_height, args.img_width)
     diffusion_ft_trainer = Trainer(
         diffusion_model=DiffusionModel(
