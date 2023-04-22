@@ -1,9 +1,7 @@
-import copy
-
 import tensorflow as tf
-from tensorflow import keras
 import tensorflow.experimental.numpy as tnp
 from keras_cv.models.stable_diffusion.noise_scheduler import NoiseScheduler
+from tensorflow import keras
 
 
 class Trainer(tf.keras.Model):

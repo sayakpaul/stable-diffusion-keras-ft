@@ -58,7 +58,7 @@ def parse_args():
         default=None,
         type=str,
         help="Provide a local path to a diffusion model checkpoint in the `h5`"
-        " format if you want to start over fine-tuning from this checkpoint.",
+             " format if you want to start over fine-tuning from this checkpoint.",
     )
 
     return parser.parse_args()
@@ -88,11 +88,11 @@ def run(args):
 
     print("Initializing trainer...")
     ckpt_name = (
-        CKPT_PREFIX
-        + f"_epochs_{args.num_epochs}"
-        + f"_res_{args.img_height}"
-        + f"_mp_{args.mp}"
-        + ".h5"
+            CKPT_PREFIX
+            + f"_epochs_{args.num_epochs}"
+            + f"_res_{args.img_height}"
+            + f"_mp_{args.mp}"
+            + ".h5"
     )
     ckpt_path = os.path.join(args.log_dir, "checkpoint", ckpt_name)
     image_encoder = ImageEncoder(args.img_height, args.img_width)
@@ -129,7 +129,7 @@ def run(args):
 
     print("Training...")
     ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
-        ckpt_path,
+        ckpt_name,
         save_weights_only=True,
         monitor="loss",
         mode="min",
@@ -137,6 +137,12 @@ def run(args):
     diffusion_ft_trainer.fit(
         training_dataset, epochs=args.num_epochs, callbacks=[ckpt_callback]
     )
+
+    print("Saving model")
+    with open(ckpt_name, 'rb') as f:
+        f_content = f.read()
+    with tf.io.gfile.GFile(ckpt_path, 'wb') as f:
+        f.write(f_content)
 
 
 if __name__ == "__main__":
