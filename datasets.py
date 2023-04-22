@@ -46,7 +46,7 @@ class DatasetUtils:
             dataset_archive = DEFAULT_DATA_ARCHIVE
 
         data_path = tf.keras.utils.get_file(
-            origin=DEFAULT_DATA_ARCHIVE,
+            origin=dataset_archive,
             untar=True,
         )
 
