@@ -17,16 +17,15 @@ MAX_PROMPT_LENGTH = 77
 AUTO = tf.data.AUTOTUNE
 POS_IDS = tf.convert_to_tensor([list(range(MAX_PROMPT_LENGTH))], dtype=tf.int32)
 DEFAULT_DATA_ARCHIVE = "https://huggingface.co/datasets/sayakpaul/pokemon-blip-original-version/resolve/main/pokemon_dataset.tar.gz"
-AUTO = tf.data.AUTOTUNE
 
 
 class DatasetUtils:
     def __init__(
-        self,
-        dataset_archive: str = None,
-        batch_size: int = 4,
-        img_height: int = 256,
-        img_width: int = 256,
+            self,
+            dataset_archive: str = None,
+            batch_size: int = 4,
+            img_height: int = 256,
+            img_width: int = 256,
     ):
         self.tokenizer = SimpleTokenizer()
         self.text_encoder = TextEncoder(MAX_PROMPT_LENGTH)
@@ -46,11 +45,11 @@ class DatasetUtils:
             dataset_archive = DEFAULT_DATA_ARCHIVE
 
         data_path = tf.keras.utils.get_file(
-            origin=dataset_archive,
+            origin="file://" + os.path.abspath('') + "/" + dataset_archive,
             untar=True,
         )
 
-        self.data_frame = pd.read_csv(os.path.join(data_path, "data.csv"))
+        self.data_frame = pd.read_csv(os.path.join(data_path, "data.csv"), sep="\t")
         self.data_frame["image_path"] = self.data_frame["image_path"].apply(
             lambda x: os.path.join(data_path, x)
         )
@@ -61,7 +60,7 @@ class DatasetUtils:
         return np.array(tokens)
 
     def process_image(
-        self, image_path: tf.Tensor, tokenized_text: tf.Tensor
+            self, image_path: tf.Tensor, tokenized_text: tf.Tensor
     ) -> Tuple[tf.Tensor, tf.Tensor]:
         image = tf.io.read_file(image_path)
         image = tf.io.decode_png(image, 3)
@@ -69,12 +68,12 @@ class DatasetUtils:
         return image, tokenized_text
 
     def apply_augmentation(
-        self, image_batch: tf.Tensor, token_batch: tf.Tensor
+            self, image_batch: tf.Tensor, token_batch: tf.Tensor
     ) -> Tuple[tf.Tensor, tf.Tensor]:
         return self.augmenter(image_batch), token_batch
 
     def run_text_encoder(
-        self, image_batch: tf.Tensor, token_batch: tf.Tensor
+            self, image_batch: tf.Tensor, token_batch: tf.Tensor
     ) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         # Since the text encoder will remain frozen we can precompute it.
         return (
@@ -84,10 +83,10 @@ class DatasetUtils:
         )
 
     def prepare_dict(
-        self,
-        image_batch: tf.Tensor,
-        token_batch: tf.Tensor,
-        encoded_text_batch: tf.Tensor,
+            self,
+            image_batch: tf.Tensor,
+            token_batch: tf.Tensor,
+            encoded_text_batch: tf.Tensor,
     ) -> Dict[str, tf.Tensor]:
         return {
             "images": image_batch,

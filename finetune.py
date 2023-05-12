@@ -25,7 +25,6 @@ from datasets import DatasetUtils
 from trainer import Trainer
 
 MAX_PROMPT_LENGTH = 77
-CKPT_PREFIX = "ckpt"
 
 
 def parse_args():
@@ -37,6 +36,7 @@ def parse_args():
     parser.add_argument("--img_height", default=256, type=int)
     parser.add_argument("--img_width", default=256, type=int)
     parser.add_argument("--log_dir", type=str)
+
     # Optimization hyperparameters.
     parser.add_argument("--lr", default=1e-5, type=float)
     parser.add_argument("--wd", default=1e-2, type=float)
@@ -45,6 +45,8 @@ def parse_args():
     parser.add_argument("--epsilon", default=1e-08, type=float)
     parser.add_argument("--ema", default=0.9999, type=float)
     parser.add_argument("--max_grad_norm", default=1.0, type=float)
+    parser.add_argument("--exp_signature", type=str, help="Experiment signature")
+
     # Training hyperparameters.
     parser.add_argument("--batch_size", default=4, type=int)
     parser.add_argument("--num_epochs", default=100, type=int)
@@ -72,9 +74,12 @@ def run(args):
         assert policy.compute_dtype == "float16"
         assert policy.variable_dtype == "float32"
 
+    print("Fetch data from HDFS")
+    os.system("hdfs dfs -get {}/{} .".format(args.log_dir, args.dataset_archive))
+
     print("Saving config...")
     config = json.dumps(args.__dict__)
-    with tf.io.gfile.GFile(os.path.join(args.log_dir, 'config.json'), 'w') as f:
+    with tf.io.gfile.GFile(os.path.join(args.log_dir, args.exp_signature, 'config.json'), 'w') as f:
         f.write(config)
 
     print("Initializing dataset...")
@@ -87,15 +92,8 @@ def run(args):
     training_dataset = data_utils.prepare_dataset()
 
     print("Initializing trainer...")
-    ckpt_name = (
-            CKPT_PREFIX
-            + f"_epochs_{args.num_epochs}"
-            + f"_res_{args.img_height}"
-            + f"_mp_{args.mp}"
-            + ".h5"
-    )
-    ckpt_path = os.path.join(args.log_dir, "checkpoint", ckpt_name)
     image_encoder = ImageEncoder(args.img_height, args.img_width)
+
     diffusion_ft_trainer = Trainer(
         diffusion_model=DiffusionModel(
             args.img_height, args.img_width, MAX_PROMPT_LENGTH
@@ -113,6 +111,13 @@ def run(args):
         max_grad_norm=args.max_grad_norm,
     )
 
+    checkpoint_path = os.path.join(args.log_dir, args.exp_signature, "checkpoint")
+    if tf.io.gfile.exists(checkpoint_path):
+        print("Found existing checkpoints, begin loading checkpoint")
+        latest = tf.train.latest_checkpoint(checkpoint_path)
+        print("Latest checkpoint is {}".format(latest))
+        diffusion_ft_trainer.diffusion_model.load_weights(latest)
+
     print("Initializing optimizer...")
     optimizer = tf.keras.optimizers.experimental.AdamW(
         learning_rate=args.lr,
@@ -129,20 +134,18 @@ def run(args):
 
     print("Training...")
     ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
-        ckpt_name,
+        filepath=os.path.join(args.log_dir, args.exp_signature, "checkpoint", "cp-{epoch:04d}.ckpt"),
         save_weights_only=True,
         monitor="loss",
         mode="min",
     )
+    train_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(args.log_dir, args.exp_signature),
+                                                                histogram_freq=1)
     diffusion_ft_trainer.fit(
-        training_dataset, epochs=args.num_epochs, callbacks=[ckpt_callback]
+        training_dataset,
+        epochs=args.num_epochs,
+        callbacks=[ckpt_callback, train_tensorboard_callback]
     )
-
-    print("Saving model")
-    with open(ckpt_name, 'rb') as f:
-        f_content = f.read()
-    with tf.io.gfile.GFile(ckpt_path, 'wb') as f:
-        f.write(f_content)
 
 
 if __name__ == "__main__":
