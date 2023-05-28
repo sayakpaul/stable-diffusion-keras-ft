@@ -139,8 +139,11 @@ def run(args):
         monitor="loss",
         mode="min",
     )
-    train_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=os.path.join(args.log_dir, args.exp_signature),
-                                                                histogram_freq=1)
+    train_tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=os.path.join(args.log_dir, args.exp_signature),
+        histogram_freq=1,
+        profile_batch='500,520'
+    )
     diffusion_ft_trainer.fit(
         training_dataset,
         epochs=args.num_epochs,

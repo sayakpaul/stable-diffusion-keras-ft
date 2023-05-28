@@ -97,7 +97,10 @@ class Trainer(tf.keras.Model):
         if self.do_ema:
             self.ema_step()
 
-        return {m.name: m.result() for m in self.metrics}
+        metrics = {metric.name: metric.result() for metric in self.metrics}
+        metrics["loss"] = loss
+
+        return metrics
 
     def get_timestep_embedding(self, timestep, dim=320, max_period=10000):
         # Taken from
