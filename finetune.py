@@ -36,6 +36,7 @@ def parse_args():
     parser.add_argument("--img_height", default=256, type=int)
     parser.add_argument("--img_width", default=256, type=int)
     parser.add_argument("--log_dir", type=str)
+    parser.add_argument("--augmentation", type=bool, default=False)
 
     # Optimization hyperparameters.
     parser.add_argument("--lr", default=1e-5, type=float)
@@ -89,7 +90,7 @@ def run(args):
         img_height=args.img_height,
         img_width=args.img_width,
     )
-    training_dataset = data_utils.prepare_dataset()
+    training_dataset = data_utils.prepare_dataset(augmentation=args.augmentation)
 
     print("Initializing trainer...")
     image_encoder = ImageEncoder(args.img_height, args.img_width)

@@ -94,7 +94,7 @@ class DatasetUtils:
             "encoded_text": encoded_text_batch,
         }
 
-    def prepare_dataset(self) -> tf.data.Dataset:
+    def prepare_dataset(self, augmentation=True) -> tf.data.Dataset:
         all_captions = list(self.data_frame["caption"].values)
         tokenized_texts = np.empty((len(self.data_frame), MAX_PROMPT_LENGTH))
         for i, caption in enumerate(all_captions):
@@ -107,7 +107,8 @@ class DatasetUtils:
         dataset = dataset.map(self.process_image, num_parallel_calls=AUTO).batch(
             self.batch_size
         )
-        dataset = dataset.map(self.apply_augmentation, num_parallel_calls=AUTO)
+        if augmentation:
+            dataset = dataset.map(self.apply_augmentation, num_parallel_calls=AUTO)
         dataset = dataset.map(self.run_text_encoder, num_parallel_calls=AUTO)
         dataset = dataset.map(self.prepare_dict, num_parallel_calls=AUTO)
         return dataset.prefetch(AUTO)
