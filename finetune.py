@@ -4,7 +4,7 @@ Adapted from  https://github.com/huggingface/diffusers/blob/main/examples/text_t
 # Usage
 python finetune.py
 """
-
+import json
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -25,7 +25,6 @@ from datasets import DatasetUtils
 from trainer import Trainer
 
 MAX_PROMPT_LENGTH = 77
-CKPT_PREFIX = "ckpt"
 
 
 def parse_args():
@@ -36,6 +35,9 @@ def parse_args():
     parser.add_argument("--dataset_archive", default=None, type=str)
     parser.add_argument("--img_height", default=256, type=int)
     parser.add_argument("--img_width", default=256, type=int)
+    parser.add_argument("--log_dir", type=str)
+    parser.add_argument("--augmentation", type=bool, default=False)
+
     # Optimization hyperparameters.
     parser.add_argument("--lr", default=1e-5, type=float)
     parser.add_argument("--wd", default=1e-2, type=float)
@@ -44,9 +46,12 @@ def parse_args():
     parser.add_argument("--epsilon", default=1e-08, type=float)
     parser.add_argument("--ema", default=0.9999, type=float)
     parser.add_argument("--max_grad_norm", default=1.0, type=float)
+    parser.add_argument("--exp_signature", type=str, help="Experiment signature")
+
     # Training hyperparameters.
     parser.add_argument("--batch_size", default=4, type=int)
     parser.add_argument("--num_epochs", default=100, type=int)
+
     # Others.
     parser.add_argument(
         "--mp", action="store_true", help="Whether to use mixed-precision."
@@ -56,7 +61,7 @@ def parse_args():
         default=None,
         type=str,
         help="Provide a local path to a diffusion model checkpoint in the `h5`"
-        " format if you want to start over fine-tuning from this checkpoint.",
+             " format if you want to start over fine-tuning from this checkpoint.",
     )
 
     return parser.parse_args()
@@ -70,6 +75,14 @@ def run(args):
         assert policy.compute_dtype == "float16"
         assert policy.variable_dtype == "float32"
 
+    print("Fetch data from HDFS")
+    os.system("hdfs dfs -get {}/{} .".format(args.log_dir, args.dataset_archive))
+
+    print("Saving config...")
+    config = json.dumps(args.__dict__)
+    with tf.io.gfile.GFile(os.path.join(args.log_dir, args.exp_signature, 'config.json'), 'w') as f:
+        f.write(config)
+
     print("Initializing dataset...")
     data_utils = DatasetUtils(
         dataset_archive=args.dataset_archive,
@@ -77,17 +90,11 @@ def run(args):
         img_height=args.img_height,
         img_width=args.img_width,
     )
-    training_dataset = data_utils.prepare_dataset()
+    training_dataset = data_utils.prepare_dataset(augmentation=args.augmentation)
 
     print("Initializing trainer...")
-    ckpt_path = (
-        CKPT_PREFIX
-        + f"_epochs_{args.num_epochs}"
-        + f"_res_{args.img_height}"
-        + f"_mp_{args.mp}"
-        + ".h5"
-    )
     image_encoder = ImageEncoder(args.img_height, args.img_width)
+
     diffusion_ft_trainer = Trainer(
         diffusion_model=DiffusionModel(
             args.img_height, args.img_width, MAX_PROMPT_LENGTH
@@ -105,6 +112,13 @@ def run(args):
         max_grad_norm=args.max_grad_norm,
     )
 
+    checkpoint_path = os.path.join(args.log_dir, args.exp_signature, "checkpoint")
+    if tf.io.gfile.exists(checkpoint_path):
+        print("Found existing checkpoints, begin loading checkpoint")
+        latest = tf.train.latest_checkpoint(checkpoint_path)
+        print("Latest checkpoint is {}".format(latest))
+        diffusion_ft_trainer.diffusion_model.load_weights(latest)
+
     print("Initializing optimizer...")
     optimizer = tf.keras.optimizers.experimental.AdamW(
         learning_rate=args.lr,
@@ -121,13 +135,20 @@ def run(args):
 
     print("Training...")
     ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
-        ckpt_path,
+        filepath=os.path.join(args.log_dir, args.exp_signature, "checkpoint", "cp-{epoch:04d}.ckpt"),
         save_weights_only=True,
         monitor="loss",
         mode="min",
     )
+    train_tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        log_dir=os.path.join(args.log_dir, args.exp_signature),
+        histogram_freq=1,
+        profile_batch='500,520'
+    )
     diffusion_ft_trainer.fit(
-        training_dataset, epochs=args.num_epochs, callbacks=[ckpt_callback]
+        training_dataset,
+        epochs=args.num_epochs,
+        callbacks=[ckpt_callback, train_tensorboard_callback]
     )
 
 

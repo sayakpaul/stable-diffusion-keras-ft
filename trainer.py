@@ -1,8 +1,7 @@
-import copy
-
 import tensorflow as tf
 import tensorflow.experimental.numpy as tnp
 from keras_cv.models.stable_diffusion.noise_scheduler import NoiseScheduler
+from tensorflow import keras
 
 
 class Trainer(tf.keras.Model):
@@ -33,7 +32,7 @@ class Trainer(tf.keras.Model):
         if ema > 0.0:
             self.ema = tf.Variable(ema, dtype="float32")
             self.optimization_step = tf.Variable(0, dtype="int32")
-            self.ema_diffusion_model = copy.deepcopy(self.diffusion_model)
+            self.ema_diffusion_model = keras.models.clone_model(self.diffusion_model)
             self.do_ema = True
         else:
             self.do_ema = False
@@ -98,7 +97,10 @@ class Trainer(tf.keras.Model):
         if self.do_ema:
             self.ema_step()
 
-        return {m.name: m.result() for m in self.metrics}
+        metrics = {metric.name: metric.result() for metric in self.metrics}
+        metrics["loss"] = loss
+
+        return metrics
 
     def get_timestep_embedding(self, timestep, dim=320, max_period=10000):
         # Taken from
