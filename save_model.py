@@ -30,4 +30,3 @@ model = Trainer(
 latest = tf.train.latest_checkpoint("checkpoint")
 model.diffusion_model.load_weights(latest)
 model.diffusion_model.save_weights("fine_tune_exp1.h5")
-print(model.diffusion_model.get_weights())
