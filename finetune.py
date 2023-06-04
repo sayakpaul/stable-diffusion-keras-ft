@@ -97,7 +97,7 @@ def run(args):
 
     diffusion_ft_trainer = Trainer(
         diffusion_model=DiffusionModel(
-            args.img_height, args.img_width, MAX_PROMPT_LENGTH
+            args.img_height, args.img_width, MAX_PROMPT_LENGTH,
         ),
         # Remove the top layer from the encoder, which cuts off the variance and only returns
         # the mean
@@ -110,6 +110,7 @@ def run(args):
         mp=args.mp,
         ema=args.ema,
         max_grad_norm=args.max_grad_norm,
+        lora=True
     )
 
     checkpoint_path = os.path.join(args.log_dir, args.exp_signature, "checkpoint")
@@ -132,6 +133,8 @@ def run(args):
 
     print("Compiling trainer...")
     diffusion_ft_trainer.compile(optimizer=optimizer, loss="mse")
+    # print(diffusion_ft_trainer.diffusion_model.summary())
+    # print(diffusion_ft_trainer.vae.summary())
 
     print("Training...")
     ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -143,7 +146,7 @@ def run(args):
     train_tensorboard_callback = tf.keras.callbacks.TensorBoard(
         log_dir=os.path.join(args.log_dir, args.exp_signature),
         histogram_freq=1,
-        profile_batch='500,520'
+        profile_batch='1,20'
     )
     diffusion_ft_trainer.fit(
         training_dataset,
