@@ -2,7 +2,6 @@ import argparse
 import os
 
 import keras_cv
-import tensorflow as tf
 from PIL import Image
 
 from trainer import load_sd_lora_layer
@@ -22,7 +21,8 @@ def parse_args():
     parser.add_argument("--lora", action="store_true", help="Whether to load loRA layer.")
     parser.add_argument("--lora_rank", default=4, type=int)
     parser.add_argument("--lora_alpha", default=4, type=int)
-    parser.add_argument("--hdfs_path", default=None, type=str)
+    parser.add_argument("--log_dir", default=None, type=str)
+    parser.add_argument("--exp", default=None, type=str)
 
     return parser.parse_args()
 
@@ -44,7 +44,8 @@ def run(args):
         # Just to make sure.
         model.diffusion_model.trainable = False
 
-    model.diffusion_model.load_weights(args.checkpoint)
+    checkpoint = os.path.join(args.log_dir, args.exp, "checkpoint", "cp-{}.ckpt".format(args.checkpoint.zfill(4)))
+    model.diffusion_model.load_weights(checkpoint)
 
     print("Begin generating images")
     images = model.text_to_image(
@@ -53,12 +54,12 @@ def run(args):
         batch_size=args.batch_size
     )
 
+    hdfs_path = os.path.join(args.log_dir, args.exp, "output/")
     for idx, img in enumerate(images):
         image_path = f"out-{idx}.png"
         Image.fromarray(img).save(image_path)
-        if args.hdfs_path is not None:
-            os.system("hdfs dfs -mkdir -p {}".format(args.hdfs_path))
-            os.system("hdfs dfs -put {} {}".format(image_path, args.hdfs_path))
+        os.system("hdfs dfs -mkdir -p {}".format(hdfs_path))
+        os.system("hdfs dfs -put {} {}".format(image_path, hdfs_path))
 
 
 if __name__ == "__main__":
