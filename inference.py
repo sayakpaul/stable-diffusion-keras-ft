@@ -2,9 +2,43 @@ import argparse
 import os
 
 import keras_cv
+import tensorflow as tf
+import tensorflow_hub as hub
 from PIL import Image
 
 from trainer import load_sd_lora_layer
+
+os.environ["TFHUB_DOWNLOAD_PROGRESS"] = "True"
+SAVED_MODEL_PATH = "https://tfhub.dev/captain-pool/esrgan-tf2/1"
+
+
+def preprocess_image(image):
+    """ Loads image from path and preprocesses to make it model ready
+        Args:
+          image: image numpy value.
+    """
+    # If PNG, remove the alpha channel. The model only supports
+    # images with 3 color channels.
+    if image.shape[-1] == 4:
+        image = image[..., :-1]
+    hr_size = (tf.convert_to_tensor(image.shape[:-1]) // 4) * 4
+    hr_image = tf.image.crop_to_bounding_box(image, 0, 0, hr_size[0], hr_size[1])
+    hr_image = tf.cast(hr_image, tf.float32)
+    return tf.expand_dims(hr_image, 0)
+
+
+def save_image(image, filename):
+    """
+      Saves unscaled Tensor Images.
+      Args:
+        image: 3D image tensor. [height, width, channels]
+        filename: Name of the file to save.
+    """
+    if not isinstance(image, Image.Image):
+        image = tf.clip_by_value(image, 0, 255)
+        image = Image.fromarray(tf.cast(image, tf.uint8).numpy())
+    image.save("%s" % filename)
+    print("Saved as %s" % filename)
 
 
 def parse_args():
@@ -31,6 +65,7 @@ def run(args):
     model = keras_cv.models.StableDiffusion(
         img_height=args.img_height, img_width=args.img_width, jit_compile=True
     )
+    upscale_model = hub.load(SAVED_MODEL_PATH)
 
     if args.lora:
         print("Loading LoRA layer")
@@ -57,9 +92,14 @@ def run(args):
     hdfs_path = os.path.join(args.log_dir, args.exp, "output/")
     for idx, img in enumerate(images):
         image_path = f"out-{idx}.png"
+        upscale_path = f"upscaled-{idx}.png"
         Image.fromarray(img).save(image_path)
+        hr_image = preprocess_image(img)
+        upscale_image = upscale_model(hr_image)
+        save_image(tf.squeeze(upscale_image), upscale_path)
         os.system("hdfs dfs -mkdir -p {}".format(hdfs_path))
         os.system("hdfs dfs -put {} {}".format(image_path, hdfs_path))
+        os.system("hdfs dfs -put {} {}".format(upscale_path, hdfs_path))
 
 
 if __name__ == "__main__":
