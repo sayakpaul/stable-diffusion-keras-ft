@@ -53,7 +53,7 @@ def parse_args():
     parser.add_argument("--checkpoint", default=None, type=str)
     parser.add_argument("--lora", action="store_true", help="Whether to load loRA layer.")
     parser.add_argument("--lora_rank", default=4, type=int)
-    parser.add_argument("--lora_alpha", default=4, type=int)
+    parser.add_argument("--lora_alpha", default=4, type=float)
     parser.add_argument("--log_dir", default=None, type=str)
     parser.add_argument("--exp", default=None, type=str)
 

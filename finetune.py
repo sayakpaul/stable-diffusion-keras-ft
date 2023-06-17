@@ -1,11 +1,14 @@
 """
 Adapted from  https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py
-
+and from https://github.com/huggingface/diffusers/pull/1884/files
+and from https://github.com/keras-team/keras-io/pull/1388/files
 # Usage
 python finetune.py
 """
 import json
 import warnings
+
+from keras_cv.models.stable_diffusion.stable_diffusion import MAX_PROMPT_LENGTH
 
 warnings.filterwarnings("ignore")
 
@@ -24,8 +27,6 @@ from tensorflow.keras import mixed_precision
 from datasets import DatasetUtils
 from trainer import Trainer
 
-MAX_PROMPT_LENGTH = 77
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -33,13 +34,15 @@ def parse_args():
     )
     # Dataset related.
     parser.add_argument("--dataset_archive", default=None, type=str)
-    parser.add_argument("--img_height", default=256, type=int)
-    parser.add_argument("--img_width", default=256, type=int)
+    parser.add_argument("--img_height", default=512, type=int)
+    parser.add_argument("--img_width", default=512, type=int)
     parser.add_argument("--log_dir", type=str)
-    parser.add_argument("--augmentation", type=bool, default=False)
+    parser.add_argument("--augmentation", action="store_true", help="Whether to do data augmentation.")
 
     # Optimization hyperparameters.
     parser.add_argument("--lr", default=1e-5, type=float)
+    parser.add_argument("--decay_steps", default=800, type=int)
+    parser.add_argument("--alpha", default=0.1, type=float)
     parser.add_argument("--wd", default=1e-2, type=float)
     parser.add_argument("--beta_1", default=0.9, type=float)
     parser.add_argument("--beta_2", default=0.999, type=float)
@@ -49,8 +52,11 @@ def parse_args():
     parser.add_argument("--exp_signature", type=str, help="Experiment signature")
 
     # Training hyperparameters.
-    parser.add_argument("--batch_size", default=4, type=int)
-    parser.add_argument("--num_epochs", default=100, type=int)
+    parser.add_argument("--batch_size", default=1, type=int)
+    parser.add_argument("--num_epochs", default=70, type=int)
+    parser.add_argument("--lora", action="store_true", help="Whether to load loRA layer.")
+    parser.add_argument("--lora_rank", default=4, type=int)
+    parser.add_argument("--lora_alpha", default=4, type=float)
 
     # Others.
     parser.add_argument(
@@ -110,7 +116,9 @@ def run(args):
         mp=args.mp,
         ema=args.ema,
         max_grad_norm=args.max_grad_norm,
-        lora=True
+        lora=args.lora,
+        lora_rank=args.lora_rank,
+        lora_alpha=args.lora_alpha,
     )
 
     checkpoint_path = os.path.join(args.log_dir, args.exp_signature, "checkpoint")
@@ -121,8 +129,10 @@ def run(args):
         diffusion_ft_trainer.diffusion_model.load_weights(latest)
 
     print("Initializing optimizer...")
+    lr_decayed_fn = tf.keras.optimizers.schedules.CosineDecay(
+        args.lr, decay_steps=args.decay_steps, alpha=args.alpha)
     optimizer = tf.keras.optimizers.experimental.AdamW(
-        learning_rate=args.lr,
+        learning_rate=lr_decayed_fn,
         weight_decay=args.wd,
         beta_1=args.beta_1,
         beta_2=args.beta_2,
@@ -133,8 +143,6 @@ def run(args):
 
     print("Compiling trainer...")
     diffusion_ft_trainer.compile(optimizer=optimizer, loss="mse")
-    # print(diffusion_ft_trainer.diffusion_model.summary())
-    # print(diffusion_ft_trainer.vae.summary())
 
     print("Training...")
     ckpt_callback = tf.keras.callbacks.ModelCheckpoint(
