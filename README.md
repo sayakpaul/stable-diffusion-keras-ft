@@ -1,6 +1,7 @@
 # Fine-tuning Stable Diffusion using Keras
 
-This repository provides code for fine-tuning [Stable Diffusion](https://huggingface.co/CompVis/stable-diffusion-v1-4) in Keras. It is adapted from this [script by Hugging Face](https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py). The pre-trained model used for fine-tuning comes from [KerasCV](https://github.com/keras-team/keras-cv/tree/master/keras_cv/models/stable_diffusion). To know about the original model check out [this documentation](https://huggingface.co/CompVis/stable-diffusion-v1-4).  
+This repository provides code for fine-tuning [Stable Diffusion](https://huggingface.co/CompVis/stable-diffusion-v1-4) in Keras. It is adapted from this [script by Hugging Face](https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py). The pre-trained model used for fine-tuning comes from [KerasCV](https://github.com/keras-team/keras-cv/tree/master/keras_cv/models/stable_diffusion). To know about the original model check out [this documentation](https://huggingface.co/CompVis/stable-diffusion-v1-4).
+For more detail on how to fine tune using LoRA, you can refer to this [Medium blog]().
 
 **The code provided in this repository is for research purposes only**. Please check out [this section](https://github.com/keras-team/keras-cv/tree/master/keras_cv/models/stable_diffusion#uses) to know more about the potential use cases and limitations.
 
@@ -56,12 +57,15 @@ with these two different resolutions. Since we didn't use gradient accumulation,
 
 * 256x256: `python finetune.py --batch_size 4 --num_epochs 577`
 * 512x512: `python finetune.py --img_height 512 --img_width 512 --batch_size 1 --num_epochs 72 --mp`
+* 512x512 (with LoRA): `python finetune.py --img_height 512 --img_width 512 --batch_size 1 --num_epochs 70 --ema 0 --lr 1e-04 --augmentation --lora`
 
 For 256x256 resolution, we intentionally reduced the number of epochs to save compute time.
 
 **Fine-tuned weights**:
 
-You can find the fine-tuned diffusion model weights [here](https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/tree/main). 
+- You can find the fine-tuned diffusion model weights [here](https://huggingface.co/sayakpaul/kerascv_sd_pokemon_finetuned/tree/main).
+- You can get the fine-tuned
+Lora weight from [here](https://huggingface.co/Elvenson/stable_diffusion_weights/resolve/main/lora_fine_tune_keras.h5).
 
 ### Training with custom data
 
@@ -88,7 +92,7 @@ In case your dataset has multiple captions per image, you can randomly select on
 Based on the dataset, you might have to tune the hyperparameters.
 
 ## Inference
-
+- **Without LoRA:**
 ```py
 import keras_cv
 import matplotlib.pyplot as plt
@@ -119,6 +123,10 @@ pokemon_model.diffusion_model.load_weights(weights_path)
 generated_images = pokemon_model.text_to_image("Yoda", batch_size=3)
 plot_images(generated_images, "Fine-tuned on the Pokemon dataset")
 ```
+- **With LoRA:**
+
+For loading LoRA checkpoint, you can refer to this `inference.py` script for more detail.
+
 
 You can bring in your `weights_path` (should be compatible with the `diffusion_model`) and reuse the code snippet. 
 

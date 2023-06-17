@@ -42,19 +42,12 @@ class DatasetUtils:
         self.img_width = img_width
 
         if dataset_archive is None:
-            data_path = tf.keras.utils.get_file(
-                origin=DEFAULT_DATA_ARCHIVE,
-                untar=True,
-            )
-            self.data_frame = pd.read_csv(os.path.join(data_path, "data.csv"))
-        else:
-            data_path = tf.keras.utils.get_file(
-                origin="file://" + os.path.abspath('') + "/" + dataset_archive,
-                untar=True,
-            )
-            # TODO: Remove sep tab for general usage
-            self.data_frame = pd.read_csv(os.path.join(data_path, "data.csv"), sep="\t")
-
+            dataset_archive = DEFAULT_DATA_ARCHIVE
+        data_path = tf.keras.utils.get_file(
+            origin=dataset_archive,
+            untar=True,
+        )
+        self.data_frame = pd.read_csv(os.path.join(data_path, "data.csv"))
         self.data_frame["image_path"] = self.data_frame["image_path"].apply(
             lambda x: os.path.join(data_path, x)
         )
