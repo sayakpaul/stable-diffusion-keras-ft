@@ -1,7 +1,7 @@
 # Fine-tuning Stable Diffusion using Keras
 
 This repository provides code for fine-tuning [Stable Diffusion](https://huggingface.co/CompVis/stable-diffusion-v1-4) in Keras. It is adapted from this [script by Hugging Face](https://github.com/huggingface/diffusers/blob/main/examples/text_to_image/train_text_to_image.py). The pre-trained model used for fine-tuning comes from [KerasCV](https://github.com/keras-team/keras-cv/tree/master/keras_cv/models/stable_diffusion). To know about the original model check out [this documentation](https://huggingface.co/CompVis/stable-diffusion-v1-4).
-For more detail on how to fine tune using LoRA, you can refer to this [Medium blog]().
+For more detail on how to fine tune using LoRA, you can refer to this [Medium blog](https://medium.com/@bobi_29852/lora-keras-implementation-for-fine-tuning-stable-diffusion-1c3318da5ff7).
 
 **The code provided in this repository is for research purposes only**. Please check out [this section](https://github.com/keras-team/keras-cv/tree/master/keras_cv/models/stable_diffusion#uses) to know more about the potential use cases and limitations.
 
